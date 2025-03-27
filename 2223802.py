@@ -29,26 +29,26 @@ absent_streaks = df_attendance[df_attendance['status'] == 'Absent'].groupby(['st
 
 latest_absences = absent_streaks.sort_values(['student_id', 'absence_end_date']).groupby('student_id').last().reset_index()
 
-# Merge with student table
+
 final_df = latest_absences.merge(df_students, on='student_id', how='left')
 
-# Validate parent emails
+
 def is_valid_email(email):
     return bool(re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z]+\\.com$', email))
 
 final_df['email'] = final_df['parent_email'].apply(lambda x: x if is_valid_email(x) else None)
 
-# Generate messages for valid emails
+
 final_df['msg'] = final_df.apply(
     lambda row: f"Dear Parent, your child {row['student_name']} was absent from {row['absence_start_date']} to {row['absence_end_date']} for {row['total_absent_days']} days. Please ensure their attendance improves."
     if row['email'] else None, axis=1
 )
 
-# Select required columns
+
 final_output = final_df[['student_id', 'absence_start_date', 'absence_end_date', 'total_absent_days', 'email', 'msg']]
 
-# Save to CSV for review
+
 final_output.to_csv("output.csv", index=False)
 
-# Display the result
+
 print(final_output)
